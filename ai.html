@@ -199,23 +199,6 @@
             box-shadow: 0 5px 15px rgba(0, 128, 255, 0.2);
         }
 
-        /* Uploaded Image Styling */
-        .uploaded-image {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 10px;
-            margin: 10px 0;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .image-caption {
-            font-size: 14px;
-            opacity: 0.8;
-            margin-top: 5px;
-            font-style: italic;
-        }
-
         /* Input Area with RGB Effects */
         .chat-input-container {
             padding: 25px;
@@ -253,35 +236,6 @@
 
         #chat-input::placeholder {
             color: rgba(255, 255, 255, 0.5);
-        }
-
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .action-btn {
-            padding: 12px 20px;
-            background: linear-gradient(45deg, #ff0080, #ffaa00);
-            background-size: 300% 300%;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            animation: rgb-button 3s ease infinite;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.3);
         }
 
         /* RGB Send Button */
@@ -433,23 +387,6 @@
             margin-top: 2px;
         }
 
-        /* File Input Styling */
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
-
-        .file-input-wrapper input[type=file] {
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
         /* Hidden API elements */
         .api-key-input, .model-selector, .status-info {
             display: none;
@@ -494,14 +431,6 @@
             font-style: italic;
             color: #00ff88;
         }
-
-        .upload-indicator {
-            font-size: 12px;
-            opacity: 0.7;
-            margin-top: 5px;
-            font-style: italic;
-            color: #ffaa00;
-        }
     </style>
 </head>
 <body>
@@ -532,7 +461,7 @@
     <!-- Hidden API elements -->
     <div class="api-key-input">
         <input type="text" id="api-key-input" placeholder="Enter your OpenRouter API key..." 
-               value="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">
+               value="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">
     </div>
 
     <div class="model-selector">
@@ -550,9 +479,8 @@
         
         <div class="chat-messages" id="chat-messages">
             <div class="message bot-message">
-                Welcome to Shorkari Bench! 🌟 I'm your multilingual AI assistant with image upload capabilities! 
-                You can now upload pictures and I'll help you analyze them.
-                <div class="offline-indicator">💡 Features: Online/Offline AI • Image Upload • Multilingual</div>
+                Welcome to Shorkari Bench! 🌟 I'm your multilingual AI assistant. I can work both online and offline with full conversational capabilities! How can I help you today?
+                <div class="offline-indicator">💡 Tip: Switch to Offline mode for instant responses without internet - same AI quality!</div>
             </div>
         </div>
 
@@ -561,23 +489,10 @@
         </div>
 
         <div class="chat-input-container">
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <div class="file-input-wrapper">
-                    <button class="action-btn">
-                        📸 Upload Image
-                    </button>
-                    <input type="file" id="image-upload" accept="image/*" style="display: none;">
-                </div>
-                <button class="action-btn" id="camera-btn">
-                    📷 Take Photo
-                </button>
-            </div>
-
             <div class="chat-input-wrapper">
                 <textarea 
                     id="chat-input" 
-                    placeholder="Type your message or upload an image... 🌈 (Press Shift+Enter for new line, Enter to send)"
+                    placeholder="Type your message in any language... 🌈 (Press Shift+Enter for new line, Enter to send)"
                     rows="1"
                 ></textarea>
                 <button id="send-button">Send 🚀</button>
@@ -595,8 +510,6 @@
         const langButtons = document.querySelectorAll('.lang-btn');
         const modeButtons = document.querySelectorAll('.mode-btn');
         const modeIndicator = document.getElementById('mode-indicator');
-        const imageUpload = document.getElementById('image-upload');
-        const cameraBtn = document.getElementById('camera-btn');
 
         // OpenRouter API configuration
         const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -604,7 +517,6 @@
         // Language settings
         let currentLang = 'auto';
         let currentMode = 'online';
-        let uploadedImage = null;
         const languageNames = {
             'en': 'English',
             'bn': 'Bengali',
@@ -648,41 +560,23 @@
                         "I understand where you're coming from. ",
                         "That's a thoughtful perspective. ",
                         "I appreciate you sharing that. "
-                    ],
-                    'image': [
-                        "Thanks for sharing this image! ",
-                        "I can see the image you've uploaded. ",
-                        "Looking at your picture, "
                     ]
                 };
             }
 
-            generateResponse(userMessage, hasImage = false) {
+            generateResponse(userMessage) {
                 const message = userMessage.toLowerCase();
-                this.conversationHistory.push({ role: 'user', content: userMessage, hasImage });
+                this.conversationHistory.push({ role: 'user', content: userMessage });
 
                 // Analyze message type and generate contextual response
-                let response = this.analyzeAndRespond(message, userMessage, hasImage);
+                let response = this.analyzeAndRespond(message, userMessage);
                 
                 this.conversationHistory.push({ role: 'assistant', content: response });
                 return response;
             }
 
-            analyzeAndRespond(message, originalMessage, hasImage) {
-                if (hasImage) {
-                    const baseResponses = this.responsePatterns.image;
-                    const baseResponse = baseResponses[Math.floor(Math.random() * baseResponses.length)];
-                    
-                    if (message.trim()) {
-                        return baseResponse + `Regarding "${originalMessage}", this appears to be an interesting image. ` +
-                               `I can analyze visual content and provide insights about what I might detect in similar images.`;
-                    } else {
-                        return baseResponse + "This looks like a visual content. I can help you analyze images, describe what might be in them, " +
-                               "or provide creative interpretations. What would you like to know about this image?";
-                    }
-                }
-
-                // Existing text analysis logic...
+            analyzeAndRespond(message, originalMessage) {
+                // Contextual response generation based on message content
                 const words = message.split(' ');
                 const messageLength = words.length;
                 
@@ -718,6 +612,7 @@
                 const baseResponses = this.responsePatterns.question;
                 const baseResponse = baseResponses[Math.floor(Math.random() * baseResponses.length)];
                 
+                // Extract key topics from question for contextual response
                 const topics = this.extractTopics(question);
                 const contextualInfo = this.getContextualInformation(topics);
                 
@@ -837,70 +732,18 @@
         // Initialize Offline AI
         const offlineAI = new OfflineAI();
 
-        // Image Upload Functionality
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                    addMessage('❌ Image size too large. Please select an image smaller than 5MB.', false, true);
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedImage = e.target.result;
-                    
-                    // Display the uploaded image in chat
-                    const imageMessage = document.createElement('div');
-                    imageMessage.className = 'message user-message';
-                    imageMessage.innerHTML = `
-                        <div class="upload-indicator">📸 Image Uploaded</div>
-                        <img src="${uploadedImage}" class="uploaded-image" alt="Uploaded image">
-                        <div class="image-caption">You uploaded an image</div>
-                    `;
-                    chatMessages.appendChild(imageMessage);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-                    // Auto-send message about the image
-                    setTimeout(() => {
-                        sendMessageWithImage();
-                    }, 1000);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function sendMessageWithImage() {
-            const message = chatInput.value.trim() || "What can you tell me about this image?";
-            
-            addMessage(message, true);
-            chatInput.value = '';
-            sendButton.disabled = true;
-
-            showTypingIndicator();
-
-            // Simulate AI response for image
-            setTimeout(() => {
-                const botResponse = offlineAI.generateResponse(message, true);
-                hideTypingIndicator();
-                addMessage(botResponse, false, false, null, currentMode === 'offline');
-                sendButton.disabled = false;
-                chatInput.focus();
-                
-                // Clear uploaded image after processing
-                uploadedImage = null;
-            }, 1500);
-        }
-
         function updateMode(mode) {
             currentMode = mode;
             
+            // Update active button
             modeButtons.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mode === mode);
             });
 
+            // Update mode indicator
             modeIndicator.textContent = mode === 'online' ? 'Using Online AI' : 'Using Offline AI';
 
+            // Update placeholder based on mode
             if (mode === 'online') {
                 chatInput.placeholder = "Type your message in any language... 🌈 (Online Mode)";
             } else {
@@ -911,10 +754,12 @@
         function updateLanguage(lang) {
             currentLang = lang;
             
+            // Update active button
             langButtons.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.lang === lang);
             });
 
+            // Update placeholder based on language and mode
             if (currentMode === 'online') {
                 if (lang === 'auto') {
                     chatInput.placeholder = "Type your message in any language... 🌈 (Online Mode)";
@@ -951,12 +796,13 @@
             typingIndicator.style.display = 'none';
         }
 
+        // Simple language detection (basic)
         function detectLanguage(text) {
             const patterns = {
-                'bn': /[\u0980-\u09FF]/,
-                'hi': /[\u0900-\u097F]/,
-                'zh': /[\u4e00-\u9fff]/,
-                'en': /^[a-zA-Z\s.,!?]+$/
+                'bn': /[\u0980-\u09FF]/, // Bengali
+                'hi': /[\u0900-\u097F]/, // Hindi
+                'zh': /[\u4e00-\u9fff]/, // Chinese
+                'en': /^[a-zA-Z\s.,!?]+$/ // English (basic)
             };
 
             for (const [lang, pattern] of Object.entries(patterns)) {
@@ -964,7 +810,7 @@
                     return lang;
                 }
             }
-            return 'en';
+            return 'en'; // Default to English
         }
 
         function getTranslationPrompt(userMessage, targetLang) {
@@ -982,21 +828,19 @@
 
         async function sendMessage() {
             const message = chatInput.value.trim();
-            if (!message && !uploadedImage) return;
+            if (!message) return;
 
-            if (uploadedImage) {
-                sendMessageWithImage();
-                return;
-            }
-
+            // Add user message
             addMessage(message, true);
             chatInput.value = '';
             sendButton.disabled = true;
 
+            // Show typing indicator
             showTypingIndicator();
 
             try {
                 if (currentMode === 'online') {
+                    // Online mode - use API
                     const apiKey = apiKeyInput.value.trim();
                     if (!apiKey) {
                         throw new Error('Please enter your OpenRouter API key first!');
@@ -1044,6 +888,7 @@
                         const botResponse = data.choices[0].message.content;
                         hideTypingIndicator();
                         
+                        // Detect if the response was translated
                         const detectedLang = detectLanguage(message);
                         const showTranslationNote = currentLang === 'auto' && detectedLang !== 'en';
                         
@@ -1052,6 +897,8 @@
                         throw new Error('Invalid response format from API');
                     }
                 } else {
+                    // Offline mode - use advanced local AI
+                    // Simulate processing time (shorter since it's local)
                     setTimeout(() => {
                         const botResponse = offlineAI.generateResponse(message);
                         hideTypingIndicator();
@@ -1076,12 +923,6 @@
 
         // Event listeners
         sendButton.addEventListener('click', sendMessage);
-        imageUpload.addEventListener('change', handleImageUpload);
-        
-        // Camera button opens file input
-        cameraBtn.addEventListener('click', () => {
-            imageUpload.click();
-        });
 
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -1090,25 +931,30 @@
             }
         });
 
+        // Language switch
         langButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 updateLanguage(btn.dataset.lang);
             });
         });
 
+        // Mode switch
         modeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 updateMode(btn.dataset.mode);
             });
         });
 
+        // Auto-resize textarea
         chatInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
 
+        // Focus on input when page loads
         chatInput.focus();
 
+        // Add some initial animation to the chat container
         setTimeout(() => {
             document.querySelector('.chat-container').style.transform = 'scale(1)';
             document.querySelector('.chat-container').style.opacity = '1';
